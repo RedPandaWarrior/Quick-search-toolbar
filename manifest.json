@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "搜索工具栏",
+  "version": "1.0.0",
+  "description": "支持的搜索平台底部会有一个搜索快捷栏，点击快捷栏内的目标平台会直接转到该平台上搜索相同的内容",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["toolbar.js"],
+      "css": ["toolbar.css"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+
+}
