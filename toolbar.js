@@ -3,10 +3,10 @@
 
     const toolbar = {
         engineInfo: [
-            { icon: '🔍', name: 'Google', domain: 'google.com', url: 'https://www.google.com/search?q=' },
-            { icon: '🅱️', name: 'Bing', domain: 'bing.com', url: 'https://www.bing.com/search?q=' },
-            { icon: '📺', name: 'Bilibili', domain: 'bilibili.com', url: 'https://search.bilibili.com/all?keyword=' },
-            { icon: '▶️', name: 'YouTube', domain: 'youtube.com', url: 'https://www.youtube.com/results?search_query=' }
+            { icon: 'icons/bing.png', name: 'bing', domain: 'bing.com', url: 'https://www.bing.com/search?q=' },
+            { icon: 'icons/google.png', name: 'google', domain: 'google.com', url: 'https://www.google.com/search?q=' },
+            { icon: 'icons/bilibili.png', name: 'bilibili', domain: 'bilibili.com', url: 'https://search.bilibili.com/all?keyword=' },
+            { icon: 'icons/youtube.png', name: 'youtube', domain: 'youtube.com', url: 'https://www.youtube.com/results?search_query=' }
         ],
         inputEleSelector: {
             'www.google.com': 'textarea[name="q"], input[name="q"]',
@@ -90,7 +90,9 @@
         toolbar.engineInfo.forEach(engine => {
             const btn = document.createElement('button');
             btn.className = 'search-toolbar-engine';
-            btn.textContent = `${engine.icon} ${engine.name}`;
+            btn.innerHTML = `<img src="${chrome.runtime.getURL(engine.icon)}" 
+                                class="engine-icon ${engine.name}"> 
+                            <span>${engine.name}</span>`;
             btn.addEventListener('click', () => {
                 toolbar.targetEngine = engine;
                 toolbar.searchOnEngine();
@@ -132,4 +134,8 @@
     };
 
     init();
+    document.addEventListener('fullscreenchange', () => {
+        if (!toolbar.rootElement) return;
+        toolbar.rootElement.style.display = document.fullscreenElement ? 'none' : '';
+    });
 })();

@@ -1,11 +1,11 @@
 .search-toolbar-ext-root{
     position: fixed;
-    bottom: 0;
+    bottom: 3px;
     z-index: 1000;
     left: 50%;
     transform: translate(-50%);
     border: 1px solid black;
-    border-radius: 16px;
+    border-radius: 24px;
     padding: 10px 10px 7px 10px;
     background: rgba(65, 64, 64, 0.7);
     transition: transform 0.3s ease;
@@ -36,19 +36,29 @@
 
 .search-toolbar-engines{
     display: flex;
-    gap: 25px;
+    gap: 40px;
     justify-content: center;
-    width: 500px;
-    /* border: 1px solid red; */
-    padding: 20px 20px;
+    width: 550px;
+    padding: 15px 10px;
 }
 .search-toolbar-engine{
-    padding: 10px 10px 10px 10px;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;   
+    
+    /* height: 40px; */
+    width: 80px;
+    padding: 5px 10px 5px 10px;
     background-color: #fff;
     border: 1px solid black;
     border-radius: 16px;
     cursor: pointer;
-    font-size: 14px;
     color: #333;
-    font-size: 15px;
+    font-size: 14px;
 }
+.engine-icon {
+    height: 15px;
+    width: 15px;      
+}
+
+
