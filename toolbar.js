@@ -1,14 +1,14 @@
 (function () {
     'use strict';
 
-    const toolbar = {
-        engineInfo: [
+    const search_tool = {
+        platformsInfo: [
             { icon: 'icons/bing.png', name: 'bing', domain: 'bing.com', url: 'https://www.bing.com/search?q=' },
             { icon: 'icons/google.png', name: 'google', domain: 'google.com', url: 'https://www.google.com/search?q=' },
             { icon: 'icons/bilibili.png', name: 'bilibili', domain: 'bilibili.com', url: 'https://search.bilibili.com/all?keyword=' },
             { icon: 'icons/youtube.png', name: 'youtube', domain: 'youtube.com', url: 'https://www.youtube.com/results?search_query=' }
         ],
-        inputEleSelector: {
+        searchBoxSelector: {
             'www.google.com': 'textarea[name="q"], input[name="q"]',
             'www.google.com.hk': 'textarea[name="q"], input[name="q"]',
             'www.bing.com': 'textarea[name="q"], input[name="q"]',
@@ -17,125 +17,75 @@
             'www.youtube.com': 'input[name="search_query"]'
         },
 
-        rootElement: null,
-        targetEngine: null,
-        searchContent: '',
-        inputEle: null,
-        isPanelCollapsed: false,
-        openBtn: null,
+        root: null,
+        panelBtn: null,
 
-        searchOnEngine() {
-            const engine = this.targetEngine;
-            if (!engine || !this.searchContent || isCurrentEngine(engine.domain)) 
+        init() {
+            if (!search_tool.searchBoxSelector[window.location.hostname]) 
                 return;
-
-            this.isPanelCollapsed = true
-            this.applyCollapseState(this.isPanelCollapsed);
-
-            const url = engine.url + encodeURIComponent(this.searchContent);
-            window.open(url, '_blank', 'noopener,noreferrer');
             
+            this.createUI();
+        },
+        
+        createUI() {
+            const root = document.createElement('div');
+            root.className = 'search-toolbar-ext-root';
+            root.classList.add('collapsed');
+            this.root = root;
+
+            const platformsContainer = document.createElement('div');
+            platformsContainer.className = 'search-toolbar-engines';
+            this.platformsInfo.forEach(platform => {
+                const btn = document.createElement('button');
+                btn.className = 'search-toolbar-engine';
+                btn.innerHTML = `<img src="${chrome.runtime.getURL(platform.icon)}" class="engine-icon ${platform.name}"><span>${platform.name}</span>`;
+                btn.addEventListener('click', () => this.searchOnEngine(platform), { passive: true });
+                platformsContainer.appendChild(btn);
+            });
+
+            const panelBtn = document.createElement('button');
+            panelBtn.className = 'search-toolbar-collapse-button';
+            panelBtn.classList.add('collapsed');
+            panelBtn.innerHTML = '▲';
+            panelBtn.addEventListener('click', ()=>this.togglePanel(), { passive: true });
+            this.panelBtn = panelBtn;
+
+            root.appendChild(panelBtn);
+            root.appendChild(platformsContainer);
+            document.documentElement.appendChild(root);
         },
 
-        applyCollapseState(isCollapsed) {
-            if (!this.rootElement || !this.openBtn)
+        searchOnEngine(platform) {
+            try{
+                const selector = this.searchBoxSelector[window.location.hostname]
+                const searchText = document.querySelector(selector).value.trim()
+                if (!searchText || window.location.hostname.includes(platform.domain)) 
+                    return;
+                const url = platform.url + encodeURIComponent(searchText);
+                window.open(url, '_blank', 'noopener,noreferrer');
+                this.togglePanel()
+            } catch (error) {
+                console.error('执行搜索时发生错误:', error);
                 return;
-
-            if (isCollapsed) {
-                this.rootElement.classList.add('collapsed');
-                this.openBtn.classList.add('collapsed');
-                this.openBtn.innerHTML = '▲';
-            } else {
-                this.rootElement.classList.remove('collapsed');
-                this.openBtn.classList.remove('collapsed');
-                this.openBtn.innerHTML = '▼';
             }
-        }
-    };
 
-    function init() {
-        if (!toolbar.inputEleSelector[window.location.hostname]) 
-            return;
+        },
 
-        createUI();
-        toolbar.isPanelCollapsed = true
-        toolbar.applyCollapseState(toolbar.isPanelCollapsed);
-
-        const input = getInputElement();
-        if (!input) return;
-        
-        toolbar.inputEle = input;
-        toolbar.searchContent = input.value.trim();
-        input.addEventListener('input', debounce(updateSearchContent,150), {
-            passive: true });  
-
+        togglePanel() {
+            if (!this.panelBtn || !this.root) {
+                console.log('root 或 panelBtn 未找到')
+                return
+            }
+            this.root.classList.toggle('collapsed');
+            this.panelBtn.classList.toggle('collapsed');
+            this.panelBtn.innerHTML = this.panelBtn.classList.contains('collapsed') ? '▲' : '▼';
+        },
     }
-
-    function createUI() {
-        const root = document.createElement('div');
-        const enginesDiv = document.createElement('div');
-        const openBtn = document.createElement('button')
-        const fragment = document.createDocumentFragment();
-
-        toolbar.rootElement = root;
-        toolbar.openBtn = openBtn;
-
-        root.className = 'search-toolbar-ext-root';
-        enginesDiv.className = 'search-toolbar-engines';
-        openBtn.className = 'search-toolbar-collapse-button';
-
-        openBtn.innerHTML = '▼';
-        openBtn.addEventListener('click', toggleToolbar, { passive: true });
-
-        toolbar.engineInfo.forEach(engine => {
-            const btn = document.createElement('button');
-            btn.className = 'search-toolbar-engine';
-            btn.innerHTML = `<img src="${chrome.runtime.getURL(engine.icon)}" 
-                                class="engine-icon ${engine.name}"> 
-                            <span>${engine.name}</span>`;
-            btn.addEventListener('click', () => {
-                toolbar.targetEngine = engine;
-                toolbar.searchOnEngine();
-            }, { passive: true });
-            fragment.appendChild(btn);
-        });
-
-        enginesDiv.appendChild(fragment);
-        root.appendChild(openBtn);
-        root.appendChild(enginesDiv);
-        document.documentElement.appendChild(root);
-        
-    }
-
-    function toggleToolbar() {
-        toolbar.isPanelCollapsed = !toolbar.isPanelCollapsed;
-        toolbar.applyCollapseState(toolbar.isPanelCollapsed);
-    }
-
-    function getInputElement() {
-        const selector = toolbar.inputEleSelector[window.location.hostname];
-        return document.querySelector(selector);
-    }
-
-    function isCurrentEngine(domain) {
-        return window.location.hostname.includes(domain);
-    }
-
-    function updateSearchContent (){
-        toolbar.searchContent = toolbar.inputEle.value.trim();
-    }
-
-    function debounce (fn, delay) {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => fn(...args), delay);
-        };
-    };
-
-    init();
+    
+    search_tool.init();
     document.addEventListener('fullscreenchange', () => {
-        if (!toolbar.rootElement) return;
-        toolbar.rootElement.style.display = document.fullscreenElement ? 'none' : '';
+        if (!search_tool.root) return;
+        search_tool.root.style.display = document.fullscreenElement ? 'none' : '';
     });
+    
 })();
